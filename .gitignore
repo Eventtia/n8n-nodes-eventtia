@@ -1,0 +1,6 @@
+dist
+node_modules
+connect_v3.json
+connect_v4.json
+.claude/settings.local.json
+my-claude-files
