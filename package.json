@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/eventtia/n8n-nodes-eventtia.git"
+    "url": "https://github.com/Eventtia/n8n-nodes-eventtia.git"
   },
   "engines": {
     "node": ">=20.15"
