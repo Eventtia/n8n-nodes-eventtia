@@ -1,10 +1,15 @@
 {
   "name": "@eventtia/n8n-nodes-eventtia",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "n8n community node to read events, attendees, workshops and related data from the Eventtia Connect API",
   "license": "MIT",
   "homepage": "https://github.com/eventtia/n8n-nodes-eventtia",
-  "keywords": ["n8n-community-node-package", "eventtia", "events", "attendees"],
+  "keywords": [
+    "n8n-community-node-package",
+    "eventtia",
+    "events",
+    "attendees"
+  ],
   "author": {
     "name": "Eventtia",
     "email": "dev@eventtia.com",
@@ -14,7 +19,9 @@
     "type": "git",
     "url": "https://github.com/eventtia/n8n-nodes-eventtia.git"
   },
-  "engines": { "node": ">=20.15" },
+  "engines": {
+    "node": ">=20.15"
+  },
   "packageManager": "pnpm@10.15.0",
   "scripts": {
     "build": "n8n-node build",
@@ -25,13 +32,21 @@
     "release": "n8n-node release",
     "prepublishOnly": "n8n-node prerelease"
   },
-  "files": ["dist"],
-  "publishConfig": { "access": "public" },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "n8n": {
     "n8nNodesApiVersion": 1,
     "strict": true,
-    "credentials": ["dist/credentials/EventtiaApi.credentials.js"],
-    "nodes": ["dist/nodes/Eventtia/Eventtia.node.js"]
+    "credentials": [
+      "dist/credentials/EventtiaApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/Eventtia/Eventtia.node.js"
+    ]
   },
   "devDependencies": {
     "@n8n/node-cli": "*",
@@ -40,5 +55,7 @@
     "release-it": "^19.0.4",
     "typescript": "5.9.2"
   },
-  "peerDependencies": { "n8n-workflow": "*" }
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
 }
