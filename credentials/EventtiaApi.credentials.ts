@@ -15,7 +15,11 @@ export class EventtiaApi implements ICredentialType {
 
 	displayName = 'Eventtia API';
 
-	icon: Icon = 'file:../nodes/Eventtia/eventtia.svg';
+	// Same file for both themes on purpose: the badge carries its own dark background.
+	icon: Icon = {
+		light: 'file:../nodes/Eventtia/eventtia.svg',
+		dark: 'file:../nodes/Eventtia/eventtia.svg',
+	};
 
 	documentationUrl = 'https://github.com/eventtia/n8n-nodes-eventtia?tab=readme-ov-file#credentials';
 

@@ -13,9 +13,9 @@ export class Eventtia implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Eventtia',
 		name: 'eventtia',
-		// Single icon for both themes: the badge carries its own dark background,
-		// so it reads on either canvas.
-		icon: 'file:eventtia.svg',
+		// Same file for both themes on purpose: the badge carries its own dark
+		// background, so it reads on either canvas.
+		icon: { light: 'file:eventtia.svg', dark: 'file:eventtia.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
