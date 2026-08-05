@@ -13,9 +13,10 @@ export class Eventtia implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'Eventtia',
 		name: 'eventtia',
-		// Same file for both themes on purpose: the badge carries its own dark
-		// background, so it reads on either canvas.
-		icon: { light: 'file:eventtia.svg', dark: 'file:eventtia.svg' },
+		// Both variants are the same artwork on purpose: the badge carries its own
+		// dark background, so it reads on either canvas. They are separate files
+		// because n8n's icon-validation rule rejects light and dark pointing to one.
+		icon: { light: 'file:eventtia.light.svg', dark: 'file:eventtia.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
