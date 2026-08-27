@@ -45,7 +45,8 @@
       "dist/credentials/EventtiaApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/Eventtia/Eventtia.node.js"
+      "dist/nodes/Eventtia/Eventtia.node.js",
+      "dist/nodes/Eventtia/EventtiaTrigger.node.js"
     ]
   },
   "devDependencies": {
