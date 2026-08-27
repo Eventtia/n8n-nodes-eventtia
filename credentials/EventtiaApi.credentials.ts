@@ -54,6 +54,18 @@ export class EventtiaApi implements ICredentialType {
 			description: 'Server-to-server client secret. Shown only once when the credentials are generated.',
 		},
 		{
+			displayName: 'Account API Key',
+			name: 'accountApiKey',
+			type: 'string',
+			// It is the account's UUID, not a secret, but the linter treats any
+			// apiKey-shaped name as sensitive and masking it costs nothing.
+			typeOptions: { password: true },
+			default: '',
+			placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+			description:
+				'Account UUID. Only the Eventtia Trigger node reads it, and only to register account-wide webhooks; leave it empty if every trigger you build is scoped to one event.',
+		},
+		{
 			displayName: 'Session Token',
 			name: 'sessionToken',
 			type: 'hidden',
