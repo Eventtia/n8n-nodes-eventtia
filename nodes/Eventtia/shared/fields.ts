@@ -16,6 +16,15 @@ export const jsendOutput = (property: string): IDataObject => ({
 	],
 });
 
+/**
+ * Some endpoints answer `{ status: 'success', data: null }` — there is nothing to unwrap.
+ * A rootProperty would hand the next node an item whose json is null, so emit a marker
+ * the workflow can branch on instead.
+ */
+export const emptyDataOutput = (marker: string): IDataObject => ({
+	postReceive: [{ type: 'set', properties: { value: `={{ { "${marker}": true } }}` } }],
+});
+
 /** Event UUID (the event's `api_key`), required by every event-scoped endpoint. */
 export const eventUuidField = (show: ShowCondition): INodeProperties => ({
 	displayName: 'Event UUID',
@@ -26,11 +35,19 @@ export const eventUuidField = (show: ShowCondition): INodeProperties => ({
 	placeholder: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
 	displayOptions: { show },
 	description:
-		"The event's UUID (its api_key). Webhook payloads don't include it — use the Event > Get by URI operation to resolve it from an event URI.",
+		"The event's UUID (its api_key). Trigger payloads carry it in the included events entry, under attributes.uuid.",
 });
 
-/** Attendee UUID, the 12-character identifier assigned at registration. */
-export const attendeeUuidField = (show: ShowCondition): INodeProperties => ({
+/**
+ * Attendee UUID, the 12-character identifier assigned at registration.
+ *
+ * Takes optional routing because the session enrolment endpoints want it in the body,
+ * while everywhere else it only ever appears in the URL.
+ */
+export const attendeeUuidField = (
+	show: ShowCondition,
+	routing?: INodeProperties['routing'],
+): INodeProperties => ({
 	displayName: 'Attendee UUID',
 	name: 'attendeeUuid',
 	type: 'string',
@@ -39,6 +56,28 @@ export const attendeeUuidField = (show: ShowCondition): INodeProperties => ({
 	placeholder: 'a1b2c3d4e5f6',
 	displayOptions: { show },
 	description: "The attendee's UUID",
+	...(routing ? { routing } : {}),
+});
+
+/**
+ * Collection of optional body fields — the Add Field box shown on create and update.
+ *
+ * Sorting happens here so every caller can declare its options in whatever order reads
+ * best and share one list between create and update, which differ only by a field or two.
+ */
+export const optionalFields = (config: {
+	name: string;
+	displayName: string;
+	show: ShowCondition;
+	options: INodeProperties[];
+}): INodeProperties => ({
+	displayName: config.displayName,
+	name: config.name,
+	type: 'collection',
+	placeholder: 'Add Field',
+	default: {},
+	displayOptions: { show: config.show },
+	options: [...config.options].sort((a, b) => a.displayName.localeCompare(b.displayName)),
 });
 
 /** Standard Return All / Limit pair for list operations. */

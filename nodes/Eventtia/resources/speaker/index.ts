@@ -1,5 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
-import { eventUuidField, jsendOutput, paginationFields } from '../../shared/fields';
+import { jsendOutput } from '../../shared/fields';
+import { speakerFields } from './fields';
 
 const showOnlyForSpeakers = { resource: ['speaker'] };
 const basePath = '/api/v4/events/{{$parameter.eventUuid}}/speakers';
@@ -32,19 +33,28 @@ export const speakerDescription: INodeProperties[] = [
 					output: jsendOutput('speaker'),
 				},
 			},
+			{
+				name: 'Create',
+				value: 'create',
+				action: 'Create a speaker',
+				description: 'Add a speaker to an event',
+				routing: {
+					request: { method: 'POST', url: `=${basePath}` },
+					output: jsendOutput('speaker'),
+				},
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				action: 'Update a speaker',
+				description: 'Update the details of an existing speaker',
+				routing: {
+					request: { method: 'PUT', url: `=${basePath}/{{$parameter.speakerId}}` },
+					output: jsendOutput('speaker'),
+				},
+			},
 		],
 		default: 'getAll',
 	},
-	eventUuidField(showOnlyForSpeakers),
-	{
-		displayName: 'Speaker ID',
-		name: 'speakerId',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: '4001',
-		displayOptions: { show: { resource: ['speaker'], operation: ['get'] } },
-		description: 'The numeric ID of the speaker',
-	},
-	...paginationFields({ resource: ['speaker'], operation: ['getAll'] }),
+	...speakerFields,
 ];

@@ -1,6 +1,7 @@
 import { NodeConnectionTypes, type INodeType, type INodeTypeDescription } from 'n8n-workflow';
 import { attendeeDescription } from './resources/attendee';
 import { attendeeTypeDescription } from './resources/attendeeType';
+import { checkpointDescription } from './resources/checkpoint';
 import { cityDescription } from './resources/city';
 import { eventDescription } from './resources/event';
 import { paymentDescription } from './resources/payment';
@@ -20,7 +21,8 @@ export class Eventtia implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Read events, attendees and related data from the Eventtia Connect API',
+		description:
+			'Read and manage events, attendees, speakers and payments in the Eventtia Connect API',
 		defaults: {
 			name: 'Eventtia',
 		},
@@ -29,7 +31,7 @@ export class Eventtia implements INodeType {
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'eventtiaApi', required: true }],
 		requestDefaults: {
-			// Host only: operations span both /api/v4 and one /api/v3 endpoint.
+			// Host only: every operation spells out its own /api/v4 prefix.
 			baseURL: '={{$credentials.environment}}',
 			headers: {
 				Accept: 'application/json',
@@ -46,6 +48,7 @@ export class Eventtia implements INodeType {
 				options: [
 					{ name: 'Attendee', value: 'attendee' },
 					{ name: 'Attendee Type', value: 'attendeeType' },
+					{ name: 'Checkpoint', value: 'checkpoint' },
 					{ name: 'City', value: 'city' },
 					{ name: 'Event', value: 'event' },
 					{ name: 'Payment', value: 'payment' },
@@ -63,6 +66,7 @@ export class Eventtia implements INodeType {
 			...sessionDescription,
 			...speakerDescription,
 			...cityDescription,
+			...checkpointDescription,
 		],
 	};
 }

@@ -1,7 +1,7 @@
 import type { INodeProperties } from 'n8n-workflow';
 import { jsendOutput } from '../../shared/fields';
 import { eventFields } from './fields';
-import { flattenJsonApiResource } from './v3';
+import { eventWriteFields } from './write-fields';
 
 const showOnlyForEvents = { resource: ['event'] };
 
@@ -34,17 +34,6 @@ export const eventDescription: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get by URI',
-				value: 'getByUri',
-				action: 'Get an event by URI',
-				description:
-					'Resolve an event from its URI and return it including the UUID (api_key) needed by every other operation',
-				routing: {
-					request: { method: 'GET', url: '=/api/v3/events/{{$parameter.eventUri}}' },
-					output: { postReceive: [flattenJsonApiResource] },
-				},
-			},
-			{
 				name: 'Get Summary',
 				value: 'getSummary',
 				action: 'Get an event summary',
@@ -74,8 +63,30 @@ export const eventDescription: INodeProperties[] = [
 					output: jsendOutput('custom_fields'),
 				},
 			},
+			{
+				name: 'Create',
+				value: 'create',
+				action: 'Create an event',
+				description: 'Create a new event in the account',
+				routing: {
+					request: { method: 'POST', url: '/api/v4/events' },
+					output: jsendOutput('event'),
+				},
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				action: 'Update an event',
+				description:
+					'Update an existing event. The URI, default language, event type and template flag cannot be changed after creation.',
+				routing: {
+					request: { method: 'PUT', url: '=/api/v4/events/{{$parameter.eventUuid}}' },
+					output: jsendOutput('event'),
+				},
+			},
 		],
 		default: 'getAll',
 	},
 	...eventFields,
+	...eventWriteFields,
 ];

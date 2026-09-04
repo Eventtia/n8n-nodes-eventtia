@@ -1,10 +1,10 @@
 # @eventtia/n8n-nodes-eventtia
 
-This is an n8n community node. It lets you read data from [Eventtia](https://www.eventtia.com) in your n8n workflows, and start workflows from Eventtia's outgoing webhooks.
+This is an n8n community node. It lets you read and write [Eventtia](https://www.eventtia.com) data in your n8n workflows, and start workflows from Eventtia's outgoing webhooks.
 
-It ships two nodes: **Eventtia**, which reads data, and **Eventtia Trigger**, which starts a workflow when something changes in Eventtia.
+It ships two nodes: **Eventtia**, which reads and writes data, and **Eventtia Trigger**, which starts a workflow when something changes in Eventtia.
 
-Eventtia is an event management platform for registration, attendee management, workshops and check-in. This node exposes the Eventtia Connect API so you can pull event and attendee data into other systems — a CRM, a spreadsheet, a reporting pipeline.
+Eventtia is an event management platform for registration, attendee management, workshops and check-in. This node exposes the Eventtia Connect API so you can move event and attendee data both ways — pull it into a CRM, a spreadsheet or a reporting pipeline, and register or update attendees from whatever system your registrations come from.
 
 [n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/sustainable-use-license/) workflow automation platform.
 
@@ -14,6 +14,7 @@ Eventtia is an event management platform for registration, attendee management, 
 [Credentials](#credentials)
 [Compatibility](#compatibility)
 [Usage](#usage)
+[Example workflow](#example-workflow)
 [Resources](#resources)
 [Version history](#version-history)
 
@@ -29,32 +30,62 @@ See the [installation guide](https://docs.n8n.io/integrations/community-nodes/in
 
 ## Operations
 
-The **Eventtia** node is **read-only**. Every operation is a GET; nothing here creates, updates or deletes data in Eventtia. (The Eventtia Trigger node does write, but only its own webhook registrations — see [Trigger](#trigger).)
+The **Eventtia** node covers the Connect API v4 in full: every read endpoint, and every write endpoint the API exposes.
 
 **Event**
 - Get Many — list the account's events, with filters for name, status, update time and templates
 - Get — a single event by UUID
-- Get by URI — resolve an event from its URI (see [Resolving an event UUID](#resolving-an-event-uuid))
 - Get Summary — attendee, attendee type and workshop metrics
 - Get Modules — which modules are enabled
 - Get Custom Fields — account-level event custom field definitions
+- Create — a new event. Needs name, URI, start and end dates, and a default language
+- Update — an existing event. The URI, default language, event type and template flag are fixed at creation
 
 **Attendee**
 - Get Many — list attendees, with filters for name, email, company, attendee type, payment and check-in status
 - Get — a single attendee by UUID
 - Get Check-In — event check-in status
 - Get Many Checkpoint Check-Ins / Get Many Workshop Check-Ins
+- Create — register an attendee. Needs first name, last name, email and an attendee type ID
+- Update — change an attendee's details or move them to another attendee type
+- Confirm / Reject — set the registration status
+- Resend Email — send the registration email again
 
 **Payment**
 - Get Many — deposits and charges for one attendee
+- Create — register a manual deposit against an attendee's balance
+- Delete — remove a deposit. Charges, discounts and taxes cannot be deleted
+
+**Speaker**
+- Get Many, Get
+- Create, Update
 
 **Attendee Type**
 - Get Many, Get, Get Form Schema, Get Many Custom Fields, Get Many Group Limits
+- Create, Update
+- Create Custom Field / Update Custom Field — the registration form fields of a type. Which options apply depends on the input type you pick, and the form only offers the relevant ones
 
-**Workshop** — Get Many, Get, Get Stats
-**Session** — Get Many, Get
-**Speaker** — Get Many, Get
+**Workshop**
+- Get Many, Get, Get Stats
+- Create — name and description are per language; sessions, pricing and per-attendee-type visibility are set here
+- Update — name and description only, the rest is fixed at creation
+
+**Session**
+- Get Many, Get
+- Create, Update
+- Archive — also cancels every active enrolment in the session
+- Enroll Attendee / Unenroll Attendee — books or cancels a seat and recalculates the attendee's charges
+
+**Checkpoint**
+- Create, Update, Archive
+
+The API has no checkpoint listing, so a checkpoint ID only comes from the Create response or from **Attendee → Get Many Checkpoint Check-Ins**.
+
 **City** — Search
+
+### Archiving
+
+**Session → Archive** and **Checkpoint → Archive** are soft deletes in Eventtia — the record stays, but nothing in this node brings it back. **Session → Unenroll Attendee** cancels a booking outright. All three are named for what they do so that an AI Agent using this node as a tool reads the consequence, not just the verb.
 
 ## Trigger
 
@@ -72,7 +103,7 @@ Account-wide `Attendee Updated` is the noisiest combination — it fires for eve
 
 ### Output
 
-The node flattens Eventtia's JSON:API envelope the same way **Event → Get by URI** does, so both chain identically:
+The node flattens Eventtia's JSON:API envelope so the payload chains like any other operation's output:
 
 ```json
 {
@@ -81,12 +112,19 @@ The node flattens Eventtia's JSON:API envelope the same way **Event → Get by U
   "status": "confirmed",
   "fields": { "445566": "Acme Corp" },
   "included": [
-    { "id": "12345", "type": "events", "attributes": { "event_uri": "tech-conference-2026" } }
+    {
+      "id": "12345",
+      "type": "events",
+      "attributes": {
+        "event_uri": "tech-conference-2026",
+        "uuid": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      }
+    }
   ]
 }
 ```
 
-`included` is passed through untouched because that is where the attendee payloads keep the event, the attendee type and the custom field definitions. The attendee's own attributes do **not** carry `event_uri` — read it from the event inside `included`, then feed it to **Event → Get by URI** to get the UUID the other operations need. Event payloads have `event_uri` at the top level and no `included` at all.
+The top-level `uuid` is the **attendee's**. `included` is passed through untouched because that is where attendee payloads keep the event, the attendee type and the custom field definitions — and the event entry is where the **event's** UUID lives, which every event-scoped operation needs. Event payloads have their attributes at the top level and no `included` at all.
 
 ### Reachability
 
@@ -130,11 +168,27 @@ Requires n8n 1.x. Built and tested against `n8n-workflow` 2.x.
 
 ### Resolving an event UUID
 
-Every event-scoped operation takes the event's **UUID** (its `api_key`). Webhook payloads from Eventtia do *not* include it — they carry the event's `event_uri` instead.
+Every event-scoped operation takes the event's **UUID** (its `api_key`). Trigger payloads carry it inside `included`, on the entry of type `events`:
 
-Use **Event → Get by URI** to bridge that gap: give it the `event_uri` from the webhook and it returns the event including its UUID, which you then feed to the rest of the operations.
+```
+{{ $json.included.find(item => item.type === 'events').attributes.uuid }}
+```
 
-It is the only operation that calls the older v3 API, because v4 has no lookup by URI. Its output is flattened so it chains like every other operation.
+Outside a trigger, **Event → Get Many** returns the UUID of every event in the account.
+
+### Custom fields
+
+**Event → Create/Update** and **Attendee → Create/Update** both take a **Custom Fields** box of ID/value pairs. The IDs are numeric and come from the API, not from the field labels:
+
+- Event custom fields → **Event → Get Custom Fields**
+- Attendee custom fields → **Attendee Type → Get Many Custom Fields**, for the attendee type you are registering under
+
+### Date formats
+
+Eventtia is not consistent here, so the node keeps dates as plain text rather than n8n date pickers, which would send ISO 8601 and be misread:
+
+- Event **Start Date** / **End Date** — `DD/MM/YYYY - HH:MM`, in the event's timezone
+- Attendee **Birthdate** — `YYYY-MM-DD`
 
 ### Pagination
 
@@ -145,6 +199,79 @@ Be mindful of the rate limit of **100 requests/minute**. Pulling every attendee 
 ### Listing payments across an event
 
 Eventtia has no event-wide payment endpoint — payments are always scoped to one attendee. To cover a whole event, chain **Attendee → Get Many** into **Payment → Get Many**, which runs once per attendee. On large events this multiplies your request count, so watch the rate limit.
+
+## Example workflow
+
+An attendee registers for `tech-conference-2026`, and the workflow pulls their full
+record from the API. It shows the one thing every Eventtia workflow needs: the event
+UUID that every event-scoped operation takes, read straight out of the trigger payload
+(see [Resolving an event UUID](#resolving-an-event-uuid)).
+
+After importing, select your Eventtia credential on both nodes and change the
+**Event URI** on the trigger to your own event.
+
+```json
+{
+  "name": "Eventtia - fetch a newly registered attendee",
+  "nodes": [
+    {
+      "parameters": {
+        "trigger": "attendee_created",
+        "eventUri": "tech-conference-2026"
+      },
+      "type": "@eventtia/n8n-nodes-eventtia.eventtiaTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "id": "b7e4c1a2-0f3d-4a8e-9c21-5d6f7a8b9c01",
+      "name": "Eventtia Trigger",
+      "webhookId": "3f9a7c52-1b4d-4e6f-8a90-2c5d7e1f3b46",
+      "credentials": {
+        "eventtiaApi": {
+          "id": "1",
+          "name": "Eventtia account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "attendee",
+        "operation": "get",
+        "eventUuid": "={{ $json.included.find(item => item.type === 'events').attributes.uuid }}",
+        "attendeeUuid": "={{ $json.uuid }}"
+      },
+      "type": "@eventtia/n8n-nodes-eventtia.eventtia",
+      "typeVersion": 1,
+      "position": [220, 0],
+      "id": "d9a6e3c4-2b5f-4c8a-9e43-7f8b9c0d1e23",
+      "name": "Get Attendee",
+      "credentials": {
+        "eventtiaApi": {
+          "id": "1",
+          "name": "Eventtia account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Eventtia Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Attendee",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
+```
 
 ## Resources
 
@@ -160,6 +287,12 @@ Not defects of this node, but limits of what the Eventtia Trigger can offer on t
 3. **PII in logs.** The HTTP client runs with debug output enabled, dumping the full request — attendee data included — into the logs.
 
 ## Version history
+
+### 0.3.0
+
+Completes the API: every write endpoint of the Connect API v4 is now available. **Event** Create/Update, **Attendee** Create/Update/Confirm/Reject/Resend Email, **Payment** Create/Delete, **Speaker** Create/Update, **Attendee Type** Create/Update plus its custom fields, **Workshop** Create/Update, **Session** Create/Update/Archive/Enroll/Unenroll, and a new **Checkpoint** resource with Create/Update/Archive. Free-form payloads (custom fields, attendee metadata, workshop pricing and visibility) are filled in as key/value pairs.
+
+**Breaking:** **Event → Get by URI** is gone. It only existed to turn an `event_uri` into a UUID, and trigger payloads now carry the event UUID directly in `included` — see [Resolving an event UUID](#resolving-an-event-uuid). Workflows using that operation need to be repointed at the value from the payload.
 
 ### 0.2.0
 

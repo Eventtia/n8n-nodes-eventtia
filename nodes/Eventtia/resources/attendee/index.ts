@@ -1,6 +1,7 @@
 import type { INodeProperties } from 'n8n-workflow';
-import { jsendOutput } from '../../shared/fields';
+import { emptyDataOutput, jsendOutput } from '../../shared/fields';
 import { attendeeFields } from './fields';
+import { attendeeWriteFields } from './write-fields';
 
 const showOnlyForAttendees = { resource: ['attendee'] };
 const eventPath = '/api/v4/events/{{$parameter.eventUuid}}/attendees';
@@ -69,8 +70,64 @@ export const attendeeDescription: INodeProperties[] = [
 					output: jsendOutput('workshop_checkins'),
 				},
 			},
+			{
+				name: 'Create',
+				value: 'create',
+				action: 'Create an attendee',
+				description: 'Register a new attendee for an event',
+				routing: {
+					request: { method: 'POST', url: `=${eventPath}` },
+					output: jsendOutput('attendee'),
+				},
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				action: 'Update an attendee',
+				description: 'Update the details of an existing attendee',
+				routing: {
+					request: { method: 'PUT', url: `=${eventPath}/{{$parameter.attendeeUuid}}` },
+					output: jsendOutput('attendee'),
+				},
+			},
+			{
+				name: 'Confirm',
+				value: 'confirm',
+				action: 'Confirm an attendee',
+				description: 'Mark an attendee as confirmed',
+				routing: {
+					request: { method: 'PUT', url: `=${eventPath}/{{$parameter.attendeeUuid}}/confirm` },
+					output: jsendOutput('attendee'),
+				},
+			},
+			{
+				name: 'Reject',
+				value: 'reject',
+				action: 'Reject an attendee',
+				description:
+					'Reject an attendee. A confirmed attendee is archived, and a checked-in one is checked out.',
+				routing: {
+					request: { method: 'PUT', url: `=${eventPath}/{{$parameter.attendeeUuid}}/reject` },
+					output: emptyDataOutput('rejected'),
+				},
+			},
+			{
+				name: 'Resend Email',
+				value: 'resendEmail',
+				action: 'Resend an attendee email',
+				description:
+					'Resend the registration email. Fails when the attendee is a draft, archived, unconfirmed, unpaid or has no email address.',
+				routing: {
+					request: {
+						method: 'POST',
+						url: `=${eventPath}/{{$parameter.attendeeUuid}}/resend_email`,
+					},
+					output: emptyDataOutput('sent'),
+				},
+			},
 		],
 		default: 'getAll',
 	},
 	...attendeeFields,
+	...attendeeWriteFields,
 ];

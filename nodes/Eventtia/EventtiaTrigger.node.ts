@@ -253,10 +253,6 @@ export class EventtiaTrigger implements INodeType {
 		defaults: {
 			name: 'Eventtia Trigger',
 		},
-		// The lint rule that gates community nodes requires this property and the type
-		// only accepts `true`, so a trigger has to declare it even though there is
-		// nothing here for an agent to call.
-		usableAsTool: true,
 		inputs: [],
 		outputs: [NodeConnectionTypes.Main],
 		credentials: [{ name: 'eventtiaApi', required: true }],
@@ -393,8 +389,8 @@ export class EventtiaTrigger implements INodeType {
 		const body = this.getBodyData();
 		const resource = body.data as { id?: string; attributes?: IDataObject } | undefined;
 
-		// Flattened the way Event > Get by URI flattens its response, so both chain
-		// the same way downstream. An unexpected shape passes through whole rather
+		// Flattened out of its JSON:API envelope so the payload chains downstream like
+		// any operation's output. An unexpected shape passes through whole rather
 		// than arriving as an empty item.
 		if (!resource?.attributes) {
 			return { workflowData: [[{ json: body }]] };
@@ -402,9 +398,9 @@ export class EventtiaTrigger implements INodeType {
 
 		const json: IDataObject = { id: resource.id, ...resource.attributes };
 
-		// Kept as-is on purpose: for attendee payloads this is where the event lives,
-		// and the event is the only place `event_uri` appears — the attendee's own
-		// attributes do not repeat it.
+		// Kept as-is on purpose: for attendee payloads this is where the event lives, and
+		// the event is the only place its `uuid` and `event_uri` appear — the attendee's
+		// own attributes do not repeat them. That uuid is what every v4 operation takes.
 		if (body.included) json.included = body.included;
 
 		return { workflowData: [[{ json }]] };

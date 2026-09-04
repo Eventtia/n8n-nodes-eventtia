@@ -4,17 +4,10 @@ import { eventUuidField, paginationFields } from '../../shared/fields';
 const showForGetAll = { resource: ['event'], operation: ['getAll'] };
 
 export const eventFields: INodeProperties[] = [
-	eventUuidField({ resource: ['event'], operation: ['get', 'getSummary', 'getModules'] }),
-	{
-		displayName: 'Event URI',
-		name: 'eventUri',
-		type: 'string',
-		required: true,
-		default: '',
-		placeholder: 'tech-conference-2026',
-		displayOptions: { show: { resource: ['event'], operation: ['getByUri'] } },
-		description: "The event's URI (slug), as found in webhook payloads",
-	},
+	eventUuidField({
+		resource: ['event'],
+		operation: ['get', 'getSummary', 'getModules', 'update'],
+	}),
 	...paginationFields(showForGetAll),
 	{
 		displayName: 'Filters',

@@ -7,14 +7,20 @@ const allOperations = [
 	'getCheckIn',
 	'getCheckpointCheckIns',
 	'getWorkshopCheckIns',
+	'create',
+	'update',
+	'confirm',
+	'reject',
+	'resendEmail',
 ];
 const showForGetAll = { resource: ['attendee'], operation: ['getAll'] };
 
 export const attendeeFields: INodeProperties[] = [
 	eventUuidField({ resource: ['attendee'], operation: allOperations }),
+	// Every operation but Create addresses an existing attendee.
 	attendeeUuidField({
 		resource: ['attendee'],
-		operation: ['get', 'getCheckIn', 'getCheckpointCheckIns', 'getWorkshopCheckIns'],
+		operation: allOperations.filter((operation) => !['getAll', 'create'].includes(operation)),
 	}),
 	...paginationFields({
 		resource: ['attendee'],
