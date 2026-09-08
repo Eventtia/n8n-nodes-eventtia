@@ -1,6 +1,6 @@
 {
   "name": "@eventtia/n8n-nodes-eventtia",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "n8n community node to read and manage events, attendees, speakers and payments in the Eventtia Connect API",
   "license": "MIT",
   "homepage": "https://github.com/eventtia/n8n-nodes-eventtia",
