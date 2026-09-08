@@ -1,5 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
 import { eventUuidField, jsendOutput, paginationFields } from '../../shared/fields';
+import { workshopWriteFields } from './write-fields';
 
 const showOnlyForWorkshops = { resource: ['workshop'] };
 const basePath = '/api/v4/events/{{$parameter.eventUuid}}/workshops';
@@ -42,6 +43,27 @@ export const workshopDescription: INodeProperties[] = [
 					output: { postReceive: [{ type: 'rootProperty', properties: { property: 'data' } }] },
 				},
 			},
+			{
+				name: 'Create',
+				value: 'create',
+				action: 'Create a workshop',
+				description: 'Add a workshop to an event, together with its sessions',
+				routing: {
+					request: { method: 'POST', url: `=${basePath}` },
+					output: jsendOutput('workshop'),
+				},
+			},
+			{
+				name: 'Update',
+				value: 'update',
+				action: 'Update a workshop',
+				description:
+					'Rename a workshop or change its description. Sessions, pricing and visibility are set at creation only.',
+				routing: {
+					request: { method: 'PUT', url: `=${basePath}/{{$parameter.workshopGuid}}` },
+					output: jsendOutput('workshop'),
+				},
+			},
 		],
 		default: 'getAll',
 	},
@@ -53,8 +75,11 @@ export const workshopDescription: INodeProperties[] = [
 		required: true,
 		default: '',
 		placeholder: 'wsdef-abc123',
-		displayOptions: { show: { resource: ['workshop'], operation: ['get', 'getStats'] } },
+		displayOptions: {
+			show: { resource: ['workshop'], operation: ['get', 'getStats', 'update'] },
+		},
 		description: 'The GUID of the workshop',
 	},
+	...workshopWriteFields,
 	...paginationFields({ resource: ['workshop'], operation: ['getAll'] }),
 ];

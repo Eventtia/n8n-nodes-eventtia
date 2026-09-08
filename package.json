@@ -1,14 +1,16 @@
 {
   "name": "@eventtia/n8n-nodes-eventtia",
   "version": "0.2.0",
-  "description": "n8n community node to read events, attendees, workshops and related data from the Eventtia Connect API",
+  "description": "n8n community node to read and manage events, attendees, speakers and payments in the Eventtia Connect API",
   "license": "MIT",
   "homepage": "https://github.com/eventtia/n8n-nodes-eventtia",
   "keywords": [
     "n8n-community-node-package",
     "eventtia",
     "events",
-    "attendees"
+    "attendees",
+    "event-management",
+    "registration"
   ],
   "author": {
     "name": "Eventtia",
@@ -50,7 +52,7 @@
     ]
   },
   "devDependencies": {
-    "@n8n/node-cli": "*",
+    "@n8n/node-cli": "^0.45.4",
     "eslint": "9.32.0",
     "prettier": "3.6.2",
     "release-it": "^19.0.4",
